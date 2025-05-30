@@ -7,6 +7,12 @@ class Spaceship {
     let name: String
     var health: Int
     var position: Int
+    
+    init(name: String, health:Int, position:Int){
+        self.name = name
+        self.health = health
+        self.position = position
+    }
 
     func moveLeft() {
         position -= 1
@@ -27,6 +33,12 @@ class Spaceship {
 class Fighter: Spaceship {
     let weapon: String
     var remainingFirePower: Int
+    
+    init(weapon: String, remainingFirePower:Int,name:String, health:Int, position:Int){
+        self.weapon = weapon
+        self.remainingFirePower = remainingFirePower
+        super.init(name: name, health:health, position:position)
+    }
 
     func fire() {
         if remainingFirePower > 0 {
@@ -39,6 +51,11 @@ class Fighter: Spaceship {
 
 class ShieldedShip: Fighter {
     var shieldStrength: Int
+    
+    init(shieldStrength:Int,weapon: String, remainingFirePower:Int,name:String, health:Int, position:Int){
+        self.shieldStrength = shieldStrength
+        super.init(weapon: weapon, remainingFirePower:remainingFirePower,name: name, health:health, position:position)
+    }
 
     override func wasHit() {
         if shieldStrength > 0 {
@@ -53,20 +70,23 @@ class ShieldedShip: Fighter {
 
  Then create an instance of `Spaceship` below called `falcon`. Use the memberwise initializer you just created. The ship's name should be "Falcon."
  */
-
-
+let falcon : Spaceship = Spaceship(name:"Prey",health:100,position:100)
+print(falcon.name)
 /*:
  Writing initializers for subclasses can get tricky. Your initializer needs to not only set the properties declared on the subclass, but also set all of the uninitialized properties on classes that it inherits from. Go to the declaration of `Fighter` and write an initializer that takes an argument for each property on `Fighter` and for each property on `Spaceship`. Set the properties accordingly. (Hint: you can call through to a superclass' initializer with `super.init` *after* you initialize all of the properties on the subclass).
 
  Then create an instance of `Fighter` below called `destroyer`. Use the memberwise initializer you just created. The ship's name should be "Destroyer."
  */
-
+let destroyer : Fighter = Fighter(weapon:"Boomerang",remainingFirePower:100,name:"Destroyer",health:100,position:1000 )
+print(destroyer.name)
 
 /*:
  Now go add an initializer to `ShieldedShip` that takes an argument for each property on `ShieldedShip`, `Fighter`, and `Spaceship`, and sets the properties accordingly. Remember that you can call through to the initializer on `Fighter` using `super.init`.
 
  Then create an instance of `ShieldedShip` below called `defender`. Use the memberwise initializer you just created. The ship's name should be "Defender."
  */
+let defender : ShieldedShip = ShieldedShip(shieldStrength:100000,weapon:"Boomerang",remainingFirePower:100,name:"Defender",health:100,position:1000 )
+print(defender.name)
 
 
 /*:

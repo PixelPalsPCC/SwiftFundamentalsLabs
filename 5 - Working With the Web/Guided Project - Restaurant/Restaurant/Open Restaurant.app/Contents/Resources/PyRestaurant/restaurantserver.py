@@ -1,4 +1,4 @@
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import copy
 
@@ -12,11 +12,9 @@ class S(BaseHTTPRequestHandler):
 
     def do_GET(self):
         components = self.path.split('?')
-        
         route = components[0]
         
-        print(self.path)
-        print(route)
+        # print(self.path)
         
         errorDict = {}
 
@@ -24,20 +22,24 @@ class S(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
-        
-            self.wfile.write("""
-                <html><body>
-                <h1>Restaurant Server Running</h1>
-                <p/>
-                <h2>Categories</h2>
-                <p>""" + categoriesLoadError + """</p>
-                <h2>Menu Items</h2>
-                <p>""" + menuItemsLoadError + """</p>
-                </body></html>
-                """)
+            self.wfile.write(b"<html><body><h1>Restaurant Server Running!</h1><p/><h2>Categories</h2><p>" +  categoriesLoadError.encode('utf-8') + b"<p/><h2>Menu Items</h2><p>" +  menuItemsLoadError.encode('utf-8') +b"</p></body></html>")
+        elif route == '/favicon.ico':
+            self.send_response(200)
+            self.send_header('Content-Type', 'image/x-icon')
+            self.end_headers()            
+            file = open("favicon.ico", 'rb')
+            self.wfile.write(file.read())
+            file.close
+        elif route == '/.well-known/appspecific/com.chrome.devtools.json':
+            # print("well-known")
+            self._set_headers()
+            self.wfile.write(b"")
         elif route == '/categories':
             self._set_headers()
-            self.wfile.write(json.dumps({"categories": categories}))
+
+            data = {"categories": categories}
+            json_data = json.dumps(data)
+            self.wfile.write(json_data.encode('utf-8'))
         elif route == '/menu':
             self._set_headers()
             selectedItems = []
@@ -66,7 +68,8 @@ class S(BaseHTTPRequestHandler):
                     errorDict = {"error": "invalid query parameter " + queryParam}
             
             if len(errorDict) > 0:
-                self.wfile.write(json.dumps(errorDict))
+                json_data = json.dumps(errorDict)
+                self.wfile.write(json_data.encode('utf-8'))
             else:
                 returnedItems = []
                 for item in selectedItems:
@@ -74,10 +77,9 @@ class S(BaseHTTPRequestHandler):
                         del item['estimated_prep_time']
                     returnedItems.append(item)
                 
-                self.wfile.write(json.dumps({"items": returnedItems}))
+                json_data = json.dumps({"items": returnedItems})
+                self.wfile.write(json_data.encode('utf-8'))
         elif route.startswith('/images'):
-            print("SENDING IMAGE")
-            
             self.send_response(200)
             self.send_header('Content-Type', 'image/jpeg')
     #         self.send_header('Content-Length', str(len(returnedJSONString)))
@@ -92,7 +94,8 @@ class S(BaseHTTPRequestHandler):
         else:
             self._set_headers()
             errorDict = {"error": "invalid route " + route}
-            self.wfile.write(json.dumps(errorDict))
+            json_data = json.dumps(errorDict)
+            self.wfile.write(json_data.encode('utf-8'))
         
     def do_HEAD(self):
         self._set_headers()
@@ -130,44 +133,45 @@ class S(BaseHTTPRequestHandler):
 #         self.send_header('Content-Length', str(len(returnedJSONString)))
         self.end_headers()
         
-        self.wfile.write(returnedJSONString) 
+        self.wfile.write(returnedJSONString.encode('utf-8')) 
         return
 
 categories = []
 menuItems = []
-
 categoriesLoadError = "Loaded successfully."
 menuItemsLoadError = "Loaded successfully."
-# def load_data():
-with open("categories.json", 'r') as infile:
-    try:
-        categories = json.load(infile)
-    except:
-        categoriesLoadError = "Invalid JSON."
-with open("menu.json", 'r') as infile:
-    try:
-        menuItems = json.load(infile)
-    except:
-        menuItemsLoadError = "Invalid JSON."
 
+def load_data():
+    print("LOADING DATA")
+    with open("categories.json", 'r') as infile:
+        try:
+            categories = json.load(infile)
+        except:
+            categoriesLoadError = "Invalid JSON."
+    with open("menu.json", 'r') as infile:
+        try:
+            menuItems = json.load(infile)
+        except:
+            menuItemsLoadError = "Invalid JSON."
+    print("DATA LOADED")
+
+# allows you to retrieve an item by its id 
 items_by_id = {}
-
 for item in menuItems:
     item['image_url'] = 'http://localhost:8090/images/' + str(item['id']) + '.png'
     items_by_id[item['id']] = item
-
-print(json.dumps(menuItems))
+# print(json.dumps(menuItems))
 
 def run(server_class=HTTPServer, handler_class=S, port=8090):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
-    print 'Starting httpd...'
+    print ('Starting httpd...')
     httpd.serve_forever()
 
 if __name__ == "__main__":
     from sys import argv
 
-# load_data()
+load_data()
 
 if len(argv) == 2:
     run(port=int(argv[1]))
